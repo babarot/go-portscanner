@@ -8,6 +8,10 @@ import (
 
 type Port int
 
+var (
+	DefaultHostname string = "localhost"
+)
+
 type Server struct {
 	Hostname string
 	Timeout  time.Duration
@@ -36,11 +40,11 @@ func (s *Server) Scan(port int) bool {
 }
 
 func Available(port int) bool {
-	return !NewServer("localhost").Scan(port)
+	return !NewServer(DefaultHostname).Scan(port)
 }
 
 func Get() Port {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	addr, err := net.ResolveTCPAddr("tcp", DefaultHostname+":0")
 	if err != nil {
 		panic(err)
 	}
