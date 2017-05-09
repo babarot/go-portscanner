@@ -6,42 +6,54 @@ import (
 	"time"
 )
 
-type PortScanner struct {
-	host    string
-	timeout time.Duration
+type Port int
+
+type Server struct {
+	Hostname string
+	Timeout  time.Duration
 }
 
-func NewPortScanner(host string, timeout time.Duration) *PortScanner {
-	return &PortScanner{
-		host,
-		timeout,
+func NewServer(hostname string) *Server {
+	return &Server{
+		Hostname: hostname,
+		Timeout:  3 * time.Second,
 	}
 }
 
-func (h PortScanner) getHostPort(port int) string {
-	return fmt.Sprintf("%s:%d", h.host, port)
-}
-
-func (h PortScanner) GetOpenedPorts(startPort int, Endport int) []int {
-	ret := []int{}
-	for port := startPort; port <= Endport; port++ {
-		if h.Scan(port) {
-			ret = append(ret, port)
-		}
-	}
-	return ret
-}
-
-func (h PortScanner) Scan(port int) bool {
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", h.getHostPort(port))
+func (s *Server) Scan(port int) bool {
+	server := fmt.Sprintf("%s:%d", s.Hostname, port)
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
 	if err != nil {
 		return false
 	}
-	conn, err := net.DialTimeout("tcp", tcpAddr.String(), h.timeout)
+	conn, err := net.DialTimeout("tcp", tcpAddr.String(), s.Timeout)
 	if err != nil {
 		return false
 	}
 	defer conn.Close()
 
 	return true
+}
+
+func Available(port int) bool {
+	return !NewServer("localhost").Scan(port)
+}
+
+func Get() Port {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+	port := l.Addr().(*net.TCPAddr).Port
+	return Port(port)
+}
+
+func (p Port) Addr() string {
+	return fmt.Sprintf(":%d", p)
 }

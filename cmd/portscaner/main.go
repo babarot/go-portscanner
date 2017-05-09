@@ -1,23 +1,18 @@
 package main
 
 import (
-	"flag"
-	"os"
-	"time"
+	"fmt"
 
-	portscanner "github.com/b4b4r07/go-portscaner"
-)
-
-var (
-	host = flag.String("h", "localhost", "host name")
-	port = flag.Int("p", 80, "port")
+	"github.com/b4b4r07/go-portscaner"
 )
 
 func main() {
-	flag.Parse()
-	ps := portscanner.NewPortScanner(*host, 150*time.Millisecond)
-	open := ps.Scan(*port)
-	if !open {
-		os.Exit(1)
-	}
+	fmt.Printf("%#v\n", portscanner.Get())
+	fmt.Printf("%#v\n", portscanner.Get().Addr())
+
+	server := portscanner.NewServer("localhost")
+	fmt.Printf("%#v\n", server.Scan(8000))
+
+	// Alias for portscaner.Server.Scan()
+	fmt.Printf("%#v\n", portscanner.Available(8000))
 }
