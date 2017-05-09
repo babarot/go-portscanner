@@ -58,6 +58,13 @@ func Get() Port {
 	return Port(port)
 }
 
+func GetDefault(port int) Port {
+	if Available(port) {
+		return Port(port)
+	}
+	return Get()
+}
+
 func (p Port) Addr() string {
 	return fmt.Sprintf(":%d", p)
 }
