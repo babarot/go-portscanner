@@ -16,12 +16,14 @@ var (
 type Server struct {
 	Hostname string
 	Timeout  time.Duration
+	Port     Port
 }
 
 func NewServer(hostname string) *Server {
 	return &Server{
 		Hostname: hostname,
 		Timeout:  3 * time.Second,
+		Port:     Get(),
 	}
 }
 
@@ -44,22 +46,27 @@ func Available(port int) bool {
 	return !NewServer(DefaultHostname).Scan(port)
 }
 
-func Get() Port {
+func getPort() (port int, err error) {
 	addr, err := net.ResolveTCPAddr("tcp", DefaultHostname+":0")
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	l, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		panic(err)
+		return
 	}
 	defer l.Close()
-	port := l.Addr().(*net.TCPAddr).Port
-	return Port(port)
+
+	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
-func GetDefault(port int) Port {
+func Get() Port {
+	p, _ := getPort()
+	return Port(p)
+}
+
+func GetWith(port int) Port {
 	if Available(port) {
 		return Port(port)
 	}
@@ -68,21 +75,6 @@ func GetDefault(port int) Port {
 
 func (p Port) Addr() string {
 	return fmt.Sprintf(":%d", p)
-}
-
-func listen(port int) *net.TCPListener {
-	host := fmt.Sprintf("%s:%d", DefaultHostname, port)
-	addr, err := net.ResolveTCPAddr("tcp", host)
-	if err != nil {
-		panic(err)
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-	return l
 }
 
 func (p Port) Listen() error {
