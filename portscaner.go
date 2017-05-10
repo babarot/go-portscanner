@@ -3,6 +3,7 @@ package portscanner
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 )
 
@@ -67,4 +68,23 @@ func GetDefault(port int) Port {
 
 func (p Port) Addr() string {
 	return fmt.Sprintf(":%d", p)
+}
+
+func listen(port int) *net.TCPListener {
+	host := fmt.Sprintf("%s:%d", DefaultHostname, port)
+	addr, err := net.ResolveTCPAddr("tcp", host)
+	if err != nil {
+		panic(err)
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+	return l
+}
+
+func (p Port) Listen() error {
+	return http.ListenAndServe(p.Addr(), http.DefaultServeMux)
 }
